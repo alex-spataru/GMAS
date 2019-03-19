@@ -28,6 +28,10 @@ import QtQuick.Controls 2.0
 Container {
     id: main
 
+    signal xSignalChanged(var enabled)
+    signal ySignalChanged(var enabled)
+    signal zSignalChanged(var enabled)
+
     background: Rectangle {
         anchors.fill: parent
         gradient: Gradient {
@@ -80,27 +84,26 @@ Container {
             }
         }
 
+        SwitchDelegate {
+            checked: false
+            text: qsTr("Graficar aceleración en X")
+            onCheckedChanged: xSignalChanged(checked)
+        }
+
+        SwitchDelegate {
+            checked: false
+            text: qsTr("Graficar aceleración en Y")
+            onCheckedChanged: ySignalChanged(checked)
+        }
+
+        SwitchDelegate {
+            checked: true
+            text: qsTr("Graficar aceleración en Z")
+            onCheckedChanged: zSignalChanged(checked)
+        }
+
         Item {
             height: 2 * app.spacing
-        }
-
-        GlowingLabel {
-            font.bold: true
-            text: qsTr("Créditos:")
-            font.pixelSize: app.fontSizeMedium
-        }
-
-        GlowingLabel {
-            text: "<ul>" +
-                  "<li><b>Electrónica</b>: Emilianio Ríos</li>" +
-                  "<li><b>Estructuras:</b> Antonio Martínez</li>" +
-                  "<li><b>Documentación:</b> Mitzi Pérez</li>" +
-                  "<li><b>Programación:</b> Alex Spataru</li>" +
-                  "</ul>"
-        }
-
-        Item {
-            height: 50
         }
 
         GlowingLabel {

@@ -26,6 +26,10 @@ import QtQuick.Layouts 1.0
 import QtQuick.Controls 2.0
 
 ChartView {
+    property alias xAxisEnabled: xSeries.visible
+    property alias yAxisEnabled: ySeries.visible
+    property alias zAxisEnabled: zSeries.visible
+
     //
     // Opciones de visualizacion
     //
@@ -47,8 +51,8 @@ ChartView {
     //
     ValueAxis {
         id: positionAxis
-        max: (CSerial.amplitudMax + 0.5)
-        min: (CSerial.amplitudMax + 0.5) * -1
+        max: 30
+        min: -40
     }
 
     //
@@ -59,7 +63,8 @@ ChartView {
         useOpenGL: false
         axisX: timeAxis
         axisY: positionAxis
-        name: qsTr("Posición Relativa en X")
+        visible: false
+        name: qsTr("Aceleración en X")
     }
 
     //
@@ -70,7 +75,8 @@ ChartView {
         useOpenGL: false
         axisX: timeAxis
         axisY: positionAxis
-        name: qsTr("Posición Relativa en Y")
+        visible: false
+        name: qsTr("Aceleración en Y")
     }
 
     //
@@ -81,7 +87,7 @@ ChartView {
         useOpenGL: false
         axisX: timeAxis
         axisY: positionAxis
-        name: qsTr("Posición Relativa en Z")
+        name: qsTr("Aceleración en Z")
     }
 
     //
@@ -95,9 +101,15 @@ ChartView {
         onTriggered: {
             timeAxis.max = Math.max(CSerial.numLecturas, 100)
             timeAxis.min = Math.max(0, CSerial.numLecturas - 100)
-            CSerial.actualizarGrafica(xSeries, 0)
-            CSerial.actualizarGrafica(ySeries, 1)
-            CSerial.actualizarGrafica(zSeries, 2)
+
+            if (xSeries.visible)
+                CSerial.actualizarGrafica(xSeries, 0)
+
+            if (ySeries.visible)
+                CSerial.actualizarGrafica(ySeries, 1)
+
+            if (zSeries.visible)
+                CSerial.actualizarGrafica(zSeries, 2)
         }
     }
 }

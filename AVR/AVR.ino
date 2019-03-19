@@ -68,6 +68,12 @@ static void mandarDatos() {
   aY = normAccel.YAxis;
   aZ = normAccel.ZAxis;
 
+  // Obtener valores del giroscopio
+  Vector normGiro = mpu.readNormalizeGyro();
+  gX = normGiro.XAxis;
+  gY = normGiro.YAxis;
+  gZ = normGiro.ZAxis;
+
   // Mandar secuencia de inicio
   Serial.print("{");
 

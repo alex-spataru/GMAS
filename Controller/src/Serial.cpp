@@ -118,7 +118,7 @@ qreal Serial::amplitudMin() const {
  * Regresa la amplitud maxima posible
  */
 qreal Serial::amplitudMax() const {
-    return 20;
+    return 5;
 }
 
 /**

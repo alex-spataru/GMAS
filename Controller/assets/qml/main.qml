@@ -114,6 +114,7 @@ ApplicationWindow {
             Layout.fillHeight: true
 
             Graph {
+                id: graph
                 anchors.fill: parent
                 anchors.margins: -18
             }
@@ -130,6 +131,10 @@ ApplicationWindow {
             Toolbar {
                 anchors.fill: parent
                 anchors.margins: -9
+
+                onXSignalChanged: graph.xAxisEnabled = enabled
+                onYSignalChanged: graph.yAxisEnabled = enabled
+                onZSignalChanged: graph.zAxisEnabled = enabled
             }
         }
     }

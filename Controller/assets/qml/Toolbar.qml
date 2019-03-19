@@ -125,8 +125,9 @@ Container {
         Button {
             flat: true
             enabled: false
-            icon.width: 104 * 2
-            icon.height: 43 * 2
+            Layout.fillWidth: true
+            icon.width: main.implicitWidth - 6 * app.spacing
+            icon.height: 43/103 * icon.width
             icon.source: "qrc:/icons/unaq.svg"
         }
     }

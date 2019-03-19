@@ -34,93 +34,93 @@ class QSerialPort;
 class Serial : public QObject {
     Q_OBJECT
 
-    Q_PROPERTY(qreal amplitude
-               READ amplitude
-               WRITE setAmplitude
-               NOTIFY amplitudeChanged)
-    Q_PROPERTY(bool enabled
-               READ enabled
-               WRITE setEnabled
-               NOTIFY enabledChanged)
-    Q_PROPERTY(qreal frequency
-               READ frequency
-               WRITE setFrequency
-               NOTIFY frequencyChanged)
-    Q_PROPERTY(qreal minFrequency
-               READ minFrequency
+    Q_PROPERTY(qreal amplitud
+               READ amplitud
+               WRITE cambiarAmplitud
+               NOTIFY amplitudCambiada)
+    Q_PROPERTY(bool gmasHabilitado
+               READ gmasHabilitado
+               WRITE habilitarGmas
+               NOTIFY gmasEstadoCambiado)
+    Q_PROPERTY(qreal frecuencia
+               READ frecuencia
+               WRITE cambiarFrecuencia
+               NOTIFY frecuenciaCambiada)
+    Q_PROPERTY(qreal frecuenciaMin
+               READ frecuenciaMin
                CONSTANT)
-    Q_PROPERTY(qreal maxFrequency
-               READ maxFrequency
+    Q_PROPERTY(qreal frecuenciaMax
+               READ frecuenciaMax
                CONSTANT)
-    Q_PROPERTY(qreal minAmplitude
-               READ minAmplitude
+    Q_PROPERTY(qreal amplitudMin
+               READ amplitudMin
                CONSTANT)
-    Q_PROPERTY(qreal maxAmplitude
-               READ maxAmplitude
+    Q_PROPERTY(qreal amplitudMax
+               READ amplitudMax
                CONSTANT)
-    Q_PROPERTY(int samples
-               READ samples
+    Q_PROPERTY(int numLecturas
+               READ numLecturas
                CONSTANT)
-    Q_PROPERTY(QStringList devices
-               READ devices
-               NOTIFY devicesChanged)
-    Q_PROPERTY(bool connectedToDevice
-               READ isConnectedToDevice
-               NOTIFY connectedChanged)
+    Q_PROPERTY(QStringList dispositivosSerial
+               READ dispositivosSerial
+               NOTIFY dispositivosCambiados)
+    Q_PROPERTY(bool conexionConDispositivo
+               READ conexionConDispositivo
+               NOTIFY conexionCambiada)
 
 signals:
-    void packetRead();
-    void dataReceived();
-    void devicesChanged();
-    void enabledChanged();
-    void connectedChanged();
-    void amplitudeChanged();
-    void frequencyChanged();
+    void datosRecibidos();
+    void conexionCambiada();
+    void amplitudCambiada();
+    void posicionCalculada();
+    void frecuenciaCambiada();
+    void gmasEstadoCambiado();
+    void dispositivosCambiados();
 
 public:
     Serial();
     ~Serial();
 
-    qreal amplitude() const;
-    qreal frequency() const;
-    qreal minFrequency() const;
-    qreal maxFrequency() const;
-    qreal minAmplitude() const;
-    qreal maxAmplitude() const;
+    qreal amplitud() const;
+    qreal frecuencia() const;
+    qreal frecuenciaMin() const;
+    qreal frecuenciaMax() const;
+    qreal amplitudMin() const;
+    qreal amplitudMax() const;
 
-    int samples() const;
-    bool enabled() const;
-    QStringList devices() const;
-    bool isConnectedToDevice() const;
-
-    Q_INVOKABLE bool startComm(const int device);
+    int numLecturas() const;
+    bool gmasHabilitado() const;
+    bool conexionConDispositivo() const;
+    QStringList dispositivosSerial() const;
+    Q_INVOKABLE bool conectarADispositivo(const int device);
 
 public slots:
-    void setEnabled(const bool enabled);
-    void setFrequency(const qreal frequency);
-    void setAmplitude(const qreal amplitude);
-    void updateSeries(QAbstractSeries* series, const int signal);
+    void habilitarGmas(const bool gmasHabilitado);
+    void cambiarFrecuencia(const qreal frecuencia);
+    void cambiarAmplitud(const qreal amplitud);
+    void actualizarGrafica(QAbstractSeries* series, const int signal);
 
 private slots:
-    void onDataReceived();
-    void disconnectDevice();
-    void refreshSerialDevices();
-    void readPacket(const QByteArray& data);
+    void onDatosRecibidos();
+    void actualizarPosicion();
+    void desconectarDispositivo();
+    void actualizarDispositivosSerial();
+    void interpretarPaquete(const QByteArray& datos);
 
 private:
-    bool m_enabled;
-    qreal m_amplitude;
-    qreal m_frequency;
-    QList<QString> m_devices;
-    QVector<QPointF> m_xReadings;
-    QVector<QPointF> m_yReadings;
-    QVector<QPointF> m_zReadings;
-    QList<QVector3D> m_gyroReadings;
-    QList<QVector3D> m_acclReadings;
+    bool m_gmasHabilitado;
+    qreal m_amplitud;
+    qreal m_frecuencia;
+    QList<QString> m_dispositivosSerial;
+    QVector<QPointF> m_lecturasX;
+    QVector<QPointF> m_lecturasY;
+    QVector<QPointF> m_lecturasZ;
+    QList<QVector3D> m_lecturasGyro;
+    QList<QVector3D> m_lecturasAccl;
 
-    qint64 m_dataLen;
-    QSerialPort* m_port;
+    qint64 m_lenDatos;
     QByteArray m_buffer;
+    QSerialPort* m_puerto;
 };
 
 #endif

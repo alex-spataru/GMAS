@@ -14,7 +14,7 @@ CONFIG += c++11
 #-------------------------------------------------------------------------------
 
 TEMPLATE = app
-TARGET = cliente
+TARGET = gmas
 
 QT += xml
 QT += svg

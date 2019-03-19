@@ -96,7 +96,8 @@ ApplicationWindow {
         //
         Frame {
             Layout.fillHeight: true
-            Layout.fillWidth: false
+            Layout.minimumWidth: 172
+            Layout.maximumWidth: 172
 
             Controls {
                 implicitWidth: 144
@@ -123,7 +124,8 @@ ApplicationWindow {
         //
         Frame {
             Layout.fillHeight: true
-            Layout.fillWidth: false
+            Layout.minimumWidth: 272
+            Layout.maximumWidth: 272
 
             Toolbar {
                 anchors.fill: parent

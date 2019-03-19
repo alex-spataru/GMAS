@@ -39,7 +39,7 @@ ChartView {
     ValueAxis {
         id: timeAxis
         min: 0
-        max: CSerial.samples
+        max: CSerial.numLecturas
     }
 
     //
@@ -47,8 +47,8 @@ ChartView {
     //
     ValueAxis {
         id: positionAxis
-        max: (CSerial.maxAmplitude + 0.5)
-        min: (CSerial.maxAmplitude + 0.5) * -1
+        max: (CSerial.amplitudMax + 0.5)
+        min: (CSerial.amplitudMax + 0.5) * -1
     }
 
     //
@@ -85,17 +85,15 @@ ChartView {
     }
 
     //
-    // Actualizar la gráfica a una freq. de 20 Hz
+    // Actualizar la gráfica cuando la ultima posicion
+    // del GMAS es calculada
     //
-    Timer {
-        id: timer
-        repeat: true
-        running: true
-        interval: (1000 / 20)
-        onTriggered:{
-            CSerial.updateSeries(xSeries, 0)
-            CSerial.updateSeries(ySeries, 1)
-            CSerial.updateSeries(zSeries, 2)
+    Connections {
+        target: CSerial
+        onPosicionCalculada: {
+            CSerial.actualizarGrafica(xSeries, 0)
+            CSerial.actualizarGrafica(ySeries, 1)
+            CSerial.actualizarGrafica(zSeries, 2)
         }
     }
 }

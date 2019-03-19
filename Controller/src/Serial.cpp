@@ -44,18 +44,18 @@ Q_DECLARE_METATYPE(QAbstractAxis *)
  */
 Serial::Serial() {
     // Inicializar valores
-    m_port = Q_NULLPTR;
-    m_dataLen = -1;
-    m_frequency = 0;
-    m_amplitude = 0;
-    m_enabled = false;
+    m_puerto = Q_NULLPTR;
+    m_lenDatos = -1;
+    m_frecuencia = 0;
+    m_amplitud = 0;
+    m_gmasHabilitado = false;
 
     // Registrar tipos de datos
     qRegisterMetaType<QAbstractSeries*>();
     qRegisterMetaType<QAbstractAxis*>();
 
     // Comenzar busqueda de dispositivos
-    QTimer::singleShot(1000, this, &Serial::refreshSerialDevices);
+    QTimer::singleShot(1000, this, &Serial::actualizarDispositivosSerial);
 }
 
 /**
@@ -63,48 +63,48 @@ Serial::Serial() {
  * del programa termine.
  */
 Serial::~Serial() {
-    disconnectDevice();
+    desconectarDispositivo();
 }
 
 /**
  * Regresa la amplitud target actual
  */
-qreal Serial::amplitude() const {
-    return m_amplitude;
+qreal Serial::amplitud() const {
+    return m_amplitud;
 }
 
 /**
  * Regresa la frequencia target actual
  */
-qreal Serial::frequency() const {
-    return m_frequency;
+qreal Serial::frecuencia() const {
+    return m_frecuencia;
 }
 
 /**
  * Regresa la frequencia minima posible
  */
-qreal Serial::minFrequency() const {
+qreal Serial::frecuenciaMin() const {
     return 0;
 }
 
 /**
  * Regresa la frequencia maxima posible
  */
-qreal Serial::maxFrequency() const {
+qreal Serial::frecuenciaMax() const {
     return 100;
 }
 
 /**
  * Regresa la amplitud minima posible
  */
-qreal Serial::minAmplitude() const {
+qreal Serial::amplitudMin() const {
     return 0;
 }
 
 /**
  * Regresa la amplitud maxima posible
  */
-qreal Serial::maxAmplitude() const {
+qreal Serial::amplitudMax() const {
     return 5;
 }
 
@@ -112,24 +112,24 @@ qreal Serial::maxAmplitude() const {
  * Regresa el numero de lecturas que tomamos antes de
  * actualizar la gráfica
  */
-int Serial::samples() const {
-    return 2 * static_cast<int>(maxFrequency());
+int Serial::numLecturas() const {
+    return 2 * static_cast<int>(frecuenciaMax());
 }
 
 /**
  * Regresa @a true si el GMAS esta habilitado
  */
-bool Serial::enabled() const {
-    return m_enabled;
+bool Serial::gmasHabilitado() const {
+    return m_gmasHabilitado;
 }
 
 /**
  * Regresa @a true si estamos conectados a algun dispositivo
  * serial
  */
-bool Serial::isConnectedToDevice() const {
-    if (m_port != Q_NULLPTR)
-        return m_port->isOpen();
+bool Serial::conexionConDispositivo() const {
+    if (m_puerto != Q_NULLPTR)
+        return m_puerto->isOpen();
 
     return false;
 }
@@ -137,8 +137,8 @@ bool Serial::isConnectedToDevice() const {
 /**
  * Regresa una lista con los dispositivos serial disponibles
  */
-QStringList Serial::devices() const {
-    return m_devices;
+QStringList Serial::dispositivosSerial() const {
+    return m_dispositivosSerial;
 }
 
 /**
@@ -148,9 +148,9 @@ QStringList Serial::devices() const {
  * @return @a true si la conexión se establecio con éxito,
  *         @a false si hubo algún error
  */
-bool Serial::startComm(const int device) {
+bool Serial::conectarADispositivo(const int device) {
     // Disconectar el dispositivo actual
-    disconnectDevice();
+    desconectarDispositivo();
 
     // Obtener lista de puertos serial
     QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
@@ -159,24 +159,24 @@ bool Serial::startComm(const int device) {
     assert(device < ports.count());
 
     // Configurar nuevo dispositivo serial
-    m_port = new QSerialPort(ports.at(device));
-    m_port->setBaudRate(9600);
+    m_puerto = new QSerialPort(ports.at(device));
+    m_puerto->setBaudRate(9600);
 
     // Conectar señales para poder leer datos del dispositivo
-    connect(m_port, SIGNAL(readyRead()),
-            this,     SLOT(onDataReceived()));
-    connect(m_port, SIGNAL(aboutToClose()),
-            this,     SLOT(disconnectDevice()));
+    connect(m_puerto, SIGNAL(readyRead()),
+            this,     SLOT(onDatosRecibidos()));
+    connect(m_puerto, SIGNAL(aboutToClose()),
+            this,     SLOT(desconectarDispositivo()));
 
     // Intentar abrir una conexion con el dispositivo
-    if (m_port->open(QIODevice::ReadWrite)) {
-        emit connectedChanged();
+    if (m_puerto->open(QIODevice::ReadWrite)) {
+        emit conexionCambiada();
         return true;
     }
 
     // Hubo un error al abrir la conexión
     else {
-        disconnectDevice();
+        desconectarDispositivo();
         QMessageBox::warning(Q_NULLPTR,
                              tr("Error de comunicación"),
                              tr("Error al intentar establecer una conexión con %1")
@@ -190,31 +190,31 @@ bool Serial::startComm(const int device) {
 /**
  * Habilita o des-habilita el GMAS
  */
-void Serial::setEnabled(const bool enabled) {
-    m_enabled = enabled && isConnectedToDevice() && devices().count() > 0;
-    emit enabledChanged();
+void Serial::habilitarGmas(const bool enabled) {
+    m_gmasHabilitado = enabled && conexionConDispositivo() && dispositivosSerial().count() > 0;
+    emit gmasEstadoCambiado();
 }
 
 /**
  * Cambia la frecuencia target a la que se movera el GMAS
  */
-void Serial::setFrequency(const qreal frequency) {
-    assert(frequency >= minFrequency());
-    assert(frequency <= maxFrequency());
+void Serial::cambiarFrecuencia(const qreal frequency) {
+    assert(frequency >= frecuenciaMin());
+    assert(frequency <= frecuenciaMax());
 
-    m_frequency = frequency;
-    emit frequencyChanged();
+    m_frecuencia = frequency;
+    emit frecuenciaCambiada();
 }
 
 /**
  * Cambia la amplitud target a la que se movera el GMAS
  */
-void Serial::setAmplitude(const qreal amplitude) {
-    assert(amplitude >= minAmplitude());
-    assert(amplitude <= maxAmplitude());
+void Serial::cambiarAmplitud(const qreal amplitude) {
+    assert(amplitude >= amplitudMin());
+    assert(amplitude <= amplitudMax());
 
-    m_amplitude = amplitude;
-    emit amplitudeChanged();
+    m_amplitud = amplitude;
+    emit amplitudCambiada();
 }
 
 /**
@@ -224,7 +224,7 @@ void Serial::setAmplitude(const qreal amplitude) {
  *   - 1: lecturas de posicion en el eje y
  *   - 2: lecturas de posicion en el eje z
  */
-void Serial::updateSeries(QAbstractSeries* series, const int signal) {
+void Serial::actualizarGrafica(QAbstractSeries* series, const int signal) {
     // Verificaciones
     assert(signal >= 0);
     assert(signal <= 3);
@@ -234,13 +234,13 @@ void Serial::updateSeries(QAbstractSeries* series, const int signal) {
     QVector<QPointF> data;
     switch (signal) {
     case 0:
-        data = m_xReadings;
+        data = m_lecturasX;
         break;
     case 1:
-        data = m_yReadings;
+        data = m_lecturasY;
         break;
     case 2:
-        data = m_zReadings;
+        data = m_lecturasZ;
         break;
     }
 
@@ -252,66 +252,158 @@ void Serial::updateSeries(QAbstractSeries* series, const int signal) {
  * Llamado cuando recibimos cualquier número de bytes del dispositivo
  * serial, genera y separa paquetes de datos para su posterior interpretacion
  */
-void Serial::onDataReceived() {
+void Serial::onDatosRecibidos() {
+    // Verificar apuntador del puerto serial
+    if (!m_puerto)
+        return;
 
+    // Leer datos del puerto serial
+    m_lenDatos += m_puerto->bytesAvailable();
+    m_buffer.append(m_puerto->readAll());
+
+    // El buffer contiene la secuencia de terminacion, lo cual representa un
+    // paquete
+    if (m_buffer.contains(';')) {
+        // Pudimos haber recibido parte del siguiente paquete, o mas de un
+        // paquete, para evitar errores, separamos los paquetes individualmente
+        QList<QByteArray> paquetes = m_buffer.split(';');
+
+        // Verificar si el ultimo paquete esta completo o no
+        if (m_buffer.endsWith(";"))
+            m_buffer.clear();
+        else {
+            m_buffer = paquetes.last();
+            paquetes.removeLast();
+        }
+
+        // Leer cada paquete de manera individual
+        foreach (QByteArray paquete, paquetes)
+            interpretarPaquete(paquete);
+    }
+
+    // Asegurarnos que el tamaño del buffer no excede los limites del programa
+    if (m_buffer.length() >= 1024)
+        m_buffer.clear();
+}
+
+/**
+ * Realiza una doble integración con el promedio de los datos anteriores para obtener
+ * la posición actual en [x,y,z] del sensor del GMAS.
+ */
+void Serial::actualizarPosicion() {
+    // Actualizar graficas desde la UI
+    emit posicionCalculada();
 }
 
 /**
  * Termina la conexión con el dispositivo serial actual (si hay alguno conectado)
  */
-void Serial::disconnectDevice() {
+void Serial::desconectarDispositivo() {
     // Reset contador de bytes
-    m_dataLen = -1;
+    m_lenDatos = -1;
 
     // Verificar si el puerto serial es valido
-    if (m_port != Q_NULLPTR) {
+    if (m_puerto != Q_NULLPTR) {
         // Disconectar señales del puerto serial
-        m_port->disconnect(this, SLOT(onDataReceived()));
-        m_port->disconnect(this, SLOT(disconnectDevice()));
+        m_puerto->disconnect(this, SLOT(onDatosRecibidos()));
+        m_puerto->disconnect(this, SLOT(desconectarDispositivo()));
 
         // Cerrar y eliminar conexion
-        m_port->close();
-        m_port->deleteLater();
+        m_puerto->close();
+        m_puerto->deleteLater();
 
         // Reset apuntador
-        m_port = Q_NULLPTR;
-
+        m_puerto = Q_NULLPTR;
     }
 
     // Actualizar UI
-    emit connectedChanged();
+    emit conexionCambiada();
 }
 
 /**
  * Obtiene una lista de dispositivos serial del sistema y alerta al
  * resto de la aplicacion si hubo algún cambio
  */
-void Serial::refreshSerialDevices() {
+void Serial::actualizarDispositivosSerial() {
     // Buscar dispositivos serial
-    QStringList devices;
+    QStringList dispositivos;
     foreach(QSerialPortInfo port, QSerialPortInfo::availablePorts()) {
         if (port.isValid() && !port.description().isEmpty())
-            devices.append(port.portName());
+            dispositivos.append(port.portName());
     }
 
     // Si los dispositivos cambiaron, actualizar la UI
-    if (devices != m_devices) {
-        m_devices = devices;
-        emit devicesChanged();
+    if (dispositivos != m_dispositivosSerial) {
+        m_dispositivosSerial = dispositivos;
+        emit dispositivosCambiados();
     }
 
     // Llamar esta funcion dentro de un segundo
-    QTimer::singleShot(1000, this, &Serial::refreshSerialDevices);
+    QTimer::singleShot(1000, this, &Serial::actualizarDispositivosSerial);
 }
 
 /**
  * Decodifica las lecturas del acelerometro y giroscopio contenidas en
- * el paquete de @a datos.
+ * el paquete de @a datos, el cual tiene el sig. formato:
  *
- * Posteriormente, se realiza una doble integración con el promedio de
- * los datos anteriores para obtener la posición actual en [x,y,z] del
- * acelerometro.
+ *          {ACCEL_X,ACCEL_Y,ACCEL_Z,GYRO_X,GYRO_Y,GYRO_Z};
+ *
+ * Posteriormente, se registran las lecturas del acelerometro y giroscopio
+ * en una lista, la cual es usada para calcular la posicion relativa del
+ * GMAS.
  */
-void Serial::readPacket(const QByteArray& data) {
+void Serial::interpretarPaquete(const QByteArray& datos) {
+    // El paquete esta vacio
+    if (datos.length() <= 0)
+        return;
 
+    // Checar si el paquete es invalido
+    // (el ';' ya fue removido por el proceso de seleccion de paquetes).
+    if (!datos.endsWith("}") || !datos.startsWith("{"))
+        return;
+
+    // Quitar primer caracter y ultimos dos caracteres
+    QByteArray copia = datos;
+    copia.remove(0, 1);
+    copia.chop(2);
+
+    // Generar una lista a partir de los datos del paquete
+    QList<QByteArray> lecturas = copia.split(',');
+
+    // Checar si la lista contiene un numero invalido de elementos
+    if (lecturas.count() != 6)
+        return;
+
+    // Obtener lecturas individuales
+    QString acclX(lecturas.at(0));
+    QString acclY(lecturas.at(1));
+    QString acclZ(lecturas.at(2));
+    QString gyroX(lecturas.at(3));
+    QString gyroY(lecturas.at(4));
+    QString gyroZ(lecturas.at(5));
+
+    // Generar vector de acelerometro
+    QVector3D vectorAccl;
+    vectorAccl.setX(acclX.toFloat());
+    vectorAccl.setY(acclY.toFloat());
+    vectorAccl.setZ(acclZ.toFloat());
+
+    // Generar vector de giroscopio
+    QVector3D vectorGyro;
+    vectorGyro.setX(gyroX.toFloat());
+    vectorGyro.setY(gyroY.toFloat());
+    vectorGyro.setZ(gyroZ.toFloat());
+
+    // Actualizar registro de lecturas
+    m_lecturasAccl.append(vectorAccl);
+    m_lecturasGyro.append(vectorGyro);
+
+    // Eliminar lecturas viejas
+    while (m_lecturasAccl.count() > numLecturas())
+        m_lecturasAccl.removeFirst();
+    while (m_lecturasGyro.count() > numLecturas())
+        m_lecturasGyro.removeFirst();
+
+    // Calcular posicion y actualizar datos para las graficas
+    actualizarPosicion();
 }

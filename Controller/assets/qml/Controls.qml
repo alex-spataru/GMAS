@@ -61,13 +61,13 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             horizontalAlignment: Text.AlignHCenter
         } Dial {
-            to: CSerial.maxAmplitude
-            from: CSerial.minAmplitude
-            value: CSerial.maxAmplitude / 2
+            to: CSerial.amplitudMax
+            from: CSerial.amplitudMin
+            value: CSerial.amplitudMax / 2
             implicitHeight: implicitWidth
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: main.implicitWidth
-            onValueChanged: CSerial.amplitude = value
+            onValueChanged: CSerial.amplitud = value
 
             Label {
                 color: "white"
@@ -94,13 +94,13 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             horizontalAlignment: Text.AlignHCenter
         } Dial {
-            to: CSerial.maxFrequency
-            from: CSerial.minFrequency
+            to: CSerial.frecuenciaMax
+            from: CSerial.frecuenciaMin
             implicitHeight: implicitWidth
-            value: CSerial.maxFrequency / 10
+            value: CSerial.frecuenciaMax / 10
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: main.implicitWidth
-            onValueChanged: CSerial.frequency = value.toFixed(0)
+            onValueChanged: CSerial.frecuencia = value.toFixed(0)
 
             Label {
                 color: "white"
@@ -122,7 +122,7 @@ Item {
         //
         GlowingLabel {
             color: "white"
-            text: qsTr("Puerto COM")
+            text: qsTr("Puertos Serial")
             font.pixelSize: fontSizeMedium
             Layout.alignment: Qt.AlignHCenter
             horizontalAlignment: Text.AlignHCenter
@@ -144,20 +144,20 @@ Item {
                     font.bold: true
                     font.pixelSize: 14
                     Layout.maximumWidth: parent.width
-                    visible: CSerial.devices.length === 0
                     wrapMode: Label.WrapAtWordBoundaryOrAnywhere
+                    visible: CSerial.dispositivosSerial.length === 0
                     text: qsTr("No hay ningún dispositivo conectado")
                 }
 
                 Repeater {
-                    model: CSerial.devices
+                    model: CSerial.dispositivosSerial
                     delegate: RadioButton {
                         text: modelData
                         Layout.alignment: Qt.AlignHCenter
                         width: parent.width - 2 * app.spacing
                         onCheckedChanged: {
                             if (checked) {
-                                if (!CSerial.startComm(index))
+                                if (!CSerial.conectarADispositivo(index))
                                     checked = false
                             }
                         }
@@ -190,10 +190,10 @@ Item {
             display: Button.TextBesideIcon
             Layout.alignment: Qt.AlignHCenter
             icon.source: "qrc:/icons/enable.svg"
-            enabled: CSerial.connectedToDevice
-            onCheckedChanged: CSerial.enabled = checked
+            enabled: CSerial.conexionConDispositivo
+            onCheckedChanged: CSerial.gmasHabilitado = checked
             opacity: enabled ? 1 : 0.2
-            visible: CSerial.devices.length > 0
+            visible: CSerial.dispositivosSerial.length > 0
         }
     }
 }

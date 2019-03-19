@@ -95,6 +95,7 @@ ApplicationWindow {
         // Controles de frequencia, amplitud, puerto y habilitado
         //
         Frame {
+            implicitWidth: 172
             Layout.fillHeight: true
             Layout.minimumWidth: 172
             Layout.maximumWidth: 172
@@ -124,11 +125,13 @@ ApplicationWindow {
         // Controles de aplicacion (salido y pantalla completa)
         //
         Frame {
+            implicitWidth: 272
             Layout.fillHeight: true
             Layout.minimumWidth: 272
             Layout.maximumWidth: 272
 
             Toolbar {
+                implicitWidth: 272
                 anchors.fill: parent
                 anchors.margins: -9
 

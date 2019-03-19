@@ -129,7 +129,7 @@ Container {
             flat: true
             enabled: false
             Layout.fillWidth: true
-            icon.width: main.implicitWidth - 6 * app.spacing
+            icon.width: 272 - 6 * app.spacing
             icon.height: 43/103 * icon.width
             icon.source: "qrc:/icons/unaq.svg"
         }

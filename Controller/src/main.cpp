@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     QApplication::setApplicationName("GMAS");
     QApplication::setApplicationVersion("1.0");
     QApplication::setOrganizationName("IECSA 05-A");
-    QApplication::setAttribute (Qt::AA_EnableHighDpiScaling);
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
     QApplication app(argc, argv);
 

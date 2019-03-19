@@ -26,6 +26,7 @@
 #include <QObject>
 #include <QVector3D>
 #include <QStringList>
+#include <QElapsedTimer>
 #include <QAbstractSeries>
 
 QT_CHARTS_USE_NAMESPACE
@@ -88,7 +89,7 @@ public:
     qreal amplitudMin() const;
     qreal amplitudMax() const;
 
-    int numLecturas() const;
+    quint64 numLecturas() const;
     bool gmasHabilitado() const;
     bool conexionConDispositivo() const;
     QStringList dispositivosSerial() const;
@@ -101,6 +102,7 @@ public slots:
     void actualizarGrafica(QAbstractSeries* series, const int signal);
 
 private slots:
+    void mandarDatos();
     void onDatosRecibidos();
     void actualizarPosicion();
     void desconectarDispositivo();
@@ -108,19 +110,21 @@ private slots:
     void interpretarPaquete(const QByteArray& datos);
 
 private:
-    bool m_gmasHabilitado;
+    quint64 m_numLecturas;
     qreal m_amplitud;
     qreal m_frecuencia;
-    QList<QString> m_dispositivosSerial;
+    bool m_gmasHabilitado;
+
     QVector<QPointF> m_lecturasX;
     QVector<QPointF> m_lecturasY;
     QVector<QPointF> m_lecturasZ;
-    QList<QVector3D> m_lecturasGyro;
-    QList<QVector3D> m_lecturasAccl;
 
-    qint64 m_lenDatos;
+    QVector<QVector3D> m_lecturasGyro;
+    QVector<QVector3D> m_lecturasAccl;
+
     QByteArray m_buffer;
     QSerialPort* m_puerto;
+    QList<QString> m_dispositivosSerial;
 };
 
 #endif

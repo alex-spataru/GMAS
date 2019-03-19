@@ -92,7 +92,7 @@ Container {
 
         GlowingLabel {
             text: "<ul>" +
-                  "<li><b>Electrónica</b>: Emilianio Rios</li>" +
+                  "<li><b>Electrónica</b>: Emilianio Ríos</li>" +
                   "<li><b>Estructuras:</b> Antonio Martínez</li>" +
                   "<li><b>Documentación:</b> Mitzi Pérez</li>" +
                   "<li><b>Programación:</b> Alex Spataru</li>" +

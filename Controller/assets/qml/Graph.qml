@@ -29,7 +29,7 @@ ChartView {
     //
     // Opciones de visualizacion
     //
-    antialiasing: true
+    antialiasing: false
     backgroundRoundness: 0
     theme: ChartView.ChartThemeDark
 
@@ -39,7 +39,7 @@ ChartView {
     ValueAxis {
         id: timeAxis
         min: 0
-        max: CSerial.numLecturas
+        max: 1
     }
 
     //
@@ -54,9 +54,9 @@ ChartView {
     //
     // Señal para el eje X
     //
-    SplineSeries {
+    LineSeries {
         id: xSeries
-        useOpenGL: true
+        useOpenGL: false
         axisX: timeAxis
         axisY: positionAxis
         name: qsTr("Posición Relativa en X")
@@ -65,9 +65,9 @@ ChartView {
     //
     // Señal para el eje Y
     //
-    SplineSeries {
+    LineSeries {
         id: ySeries
-        useOpenGL: true
+        useOpenGL: false
         axisX: timeAxis
         axisY: positionAxis
         name: qsTr("Posición Relativa en Y")
@@ -76,9 +76,9 @@ ChartView {
     //
     // Señal para el eje Z
     //
-    SplineSeries {
+    LineSeries {
         id: zSeries
-        useOpenGL: true
+        useOpenGL: false
         axisX: timeAxis
         axisY: positionAxis
         name: qsTr("Posición Relativa en Z")
@@ -88,9 +88,13 @@ ChartView {
     // Actualizar la gráfica cuando la ultima posicion
     // del GMAS es calculada
     //
-    Connections {
-        target: CSerial
-        onPosicionCalculada: {
+    Timer {
+        interval: 1000 / 30.0
+        repeat: true
+        running: true
+        onTriggered: {
+            timeAxis.max = Math.max(CSerial.numLecturas, 100)
+            timeAxis.min = Math.max(0, CSerial.numLecturas - 100)
             CSerial.actualizarGrafica(xSeries, 0)
             CSerial.actualizarGrafica(ySeries, 1)
             CSerial.actualizarGrafica(zSeries, 2)

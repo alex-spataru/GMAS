@@ -56,14 +56,25 @@ ChartView {
     }
 
     //
+    // Señal para el eje Z
+    //
+    LineSeries {
+        id: zSeries
+        useOpenGL: true
+        axisX: timeAxis
+        axisY: positionAxis
+        name: qsTr("Aceleración en Z")
+    }
+
+    //
     // Señal para el eje X
     //
     LineSeries {
         id: xSeries
-        useOpenGL: false
+        visible: false
+        useOpenGL: true
         axisX: timeAxis
         axisY: positionAxis
-        visible: false
         name: qsTr("Aceleración en X")
     }
 
@@ -72,22 +83,11 @@ ChartView {
     //
     LineSeries {
         id: ySeries
-        useOpenGL: false
-        axisX: timeAxis
-        axisY: positionAxis
         visible: false
-        name: qsTr("Aceleración en Y")
-    }
-
-    //
-    // Señal para el eje Z
-    //
-    LineSeries {
-        id: zSeries
-        useOpenGL: false
+        useOpenGL: true
         axisX: timeAxis
         axisY: positionAxis
-        name: qsTr("Aceleración en Z")
+        name: qsTr("Aceleración en Y")
     }
 
     //
@@ -95,21 +95,16 @@ ChartView {
     // del GMAS es calculada
     //
     Timer {
-        interval: 1000 / 30.0
+        interval: 1000 / 30
         repeat: true
         running: true
         onTriggered: {
-            timeAxis.max = Math.max(CSerial.numLecturas, 100)
-            timeAxis.min = Math.max(0, CSerial.numLecturas - 100)
+            timeAxis.max = Math.max(CSerial.numLecturas, CSerial.escala)
+            timeAxis.min = Math.max(0, CSerial.numLecturas - CSerial.escala)
 
-            if (xSeries.visible)
-                CSerial.actualizarGrafica(xSeries, 0)
-
-            if (ySeries.visible)
-                CSerial.actualizarGrafica(ySeries, 1)
-
-            if (zSeries.visible)
-                CSerial.actualizarGrafica(zSeries, 2)
+            CSerial.actualizarGrafica(xSeries, 0)
+            CSerial.actualizarGrafica(ySeries, 1)
+            CSerial.actualizarGrafica(zSeries, 2)
         }
     }
 }

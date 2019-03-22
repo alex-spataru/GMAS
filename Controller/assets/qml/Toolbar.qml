@@ -50,7 +50,7 @@ Container {
     contentItem: ColumnLayout {
         spacing: app.spacing
         anchors.fill: parent
-        anchors.margins: app.spacing
+        anchors.margins: app.spacing * 2
 
         Button {
             icon.width: 44
@@ -84,26 +84,53 @@ Container {
             }
         }
 
+        Item {
+            Layout.fillHeight: true
+        }
+
+        Dial {
+            to: CSerial.escalaMax
+            from: CSerial.escalaMin
+            value: CSerial.escalaMax / 4
+            implicitHeight: implicitWidth
+            Layout.alignment: Qt.AlignHCenter
+            implicitWidth: main.implicitWidth * 0.6
+            onValueChanged: CSerial.escala = value
+
+            GlowingLabel {
+                text: qsTr("Escala")
+                anchors.centerIn: parent
+                font.pixelSize: Qt.application.font.pixelSize * 2
+            }
+        }
+
+        Item {
+            Layout.fillHeight: true
+        }
+
         SwitchDelegate {
             checked: false
+            Layout.alignment: Qt.AlignHCenter
             text: qsTr("Graficar aceleración en X")
             onCheckedChanged: xSignalChanged(checked)
         }
 
         SwitchDelegate {
             checked: false
+            Layout.alignment: Qt.AlignHCenter
             text: qsTr("Graficar aceleración en Y")
             onCheckedChanged: ySignalChanged(checked)
         }
 
         SwitchDelegate {
             checked: true
+            Layout.alignment: Qt.AlignHCenter
             text: qsTr("Graficar aceleración en Z")
             onCheckedChanged: zSignalChanged(checked)
         }
 
         Item {
-            height: 2 * app.spacing
+            Layout.fillHeight: true
         }
 
         GlowingLabel {
@@ -119,19 +146,6 @@ Container {
         GlowingLabel {
             font.pixelSize: app.fontSizeMedium
             text: qsTr("<b>Profesor:</b> Javier Uribe Luna")
-        }
-
-        Item {
-            Layout.fillHeight: true
-        }
-
-        Button {
-            flat: true
-            enabled: false
-            Layout.fillWidth: true
-            icon.width: 272 - 6 * app.spacing
-            icon.height: 43/103 * icon.width
-            icon.source: "qrc:/icons/unaq.svg"
         }
     }
 }

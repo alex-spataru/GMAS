@@ -58,6 +58,7 @@ Serial::Serial() {
     m_frecuencia = 0;
     m_amplitud = 0;
     m_numLecturas = 0;
+    m_escala = escalaMax() / 2;
     m_gmasHabilitado = false;
 
     // Registrar tipos de datos
@@ -80,6 +81,14 @@ Serial::~Serial() {
 }
 
 /**
+ * Regresa el numero de lecturas maximas antes de que sea necesario limpiar
+ * el buffer de datos temporales
+ */
+int Serial::escala() const {
+    return m_escala;
+}
+
+/**
  * Regresa la amplitud target actual
  */
 qreal Serial::amplitud() const {
@@ -91,6 +100,20 @@ qreal Serial::amplitud() const {
  */
 qreal Serial::frecuencia() const {
     return m_frecuencia;
+}
+
+/**
+ * Regrasa la escala minima posible
+ */
+int Serial::escalaMin() const {
+    return 100;
+}
+
+/**
+ * Regresa la escala maxima
+ */
+int Serial::escalaMax() const {
+    return 2000;
 }
 
 /**
@@ -173,7 +196,7 @@ bool Serial::conectarADispositivo(const int device) {
 
     // Configurar nuevo dispositivo serial
     m_puerto = new QSerialPort(ports.at(device));
-    m_puerto->setBaudRate(115200);
+    m_puerto->setBaudRate(1000000);
 
     // Conectar señales para poder leer datos del dispositivo
     connect(m_puerto, SIGNAL(readyRead()),
@@ -198,6 +221,20 @@ bool Serial::conectarADispositivo(const int device) {
 
     // Hubo algun error
     return false;
+}
+
+/**
+ * Actualiza la escala de las graficas
+ */
+void Serial::cambiarEscala(const int escala) {
+    if (escala < escalaMin())
+        m_escala = escalaMin();
+    else if (escala > escalaMax())
+        m_escala = escalaMax();
+    else
+        m_escala = escala;
+
+    emit escalaCambiada();
 }
 
 /**
@@ -240,8 +277,12 @@ void Serial::cambiarAmplitud(const qreal amplitude) {
 void Serial::actualizarGrafica(QAbstractSeries* series, const int signal) {
     // Verificaciones
     assert(signal >= 0);
-    assert(signal <= 3);
+    assert(signal <= 2);
     assert(series != Q_NULLPTR);
+
+    // No hacer nada si la grafica no es visible
+    if (!series->isVisible())
+        return;
 
     // Obtener puntos para la señal especificada
     QVector<QPointF> data;
@@ -273,11 +314,11 @@ void Serial::mandarDatos() {
 
         // Generar paquete
         QString datos = tr("%1,%2;").arg(_amp).arg(_frc);
-        //m_puerto->write(datos.toUtf8());
+        m_puerto->write(datos.toUtf8());
     }
 
     // Llamar esta funcion de nuevo en 100 ms
-    QTimer::singleShot(1000, this, &Serial::mandarDatos);
+    QTimer::singleShot(100, this, &Serial::mandarDatos);
 }
 
 /**
@@ -331,11 +372,11 @@ void Serial::actualizarPosicion() {
     ++m_numLecturas;
 
     // Eliminar elementos viejos
-    EliminarLecturasViejas<QPointF>(&m_lecturasX, 100);
-    EliminarLecturasViejas<QPointF>(&m_lecturasY, 100);
-    EliminarLecturasViejas<QPointF>(&m_lecturasZ, 100);
-    EliminarLecturasViejas<QVector3D>(&m_lecturasAccl, 100);
-    EliminarLecturasViejas<QVector3D>(&m_lecturasGyro, 100);
+    EliminarLecturasViejas<QPointF>(&m_lecturasX, escala());
+    EliminarLecturasViejas<QPointF>(&m_lecturasY, escala());
+    EliminarLecturasViejas<QPointF>(&m_lecturasZ, escala());
+    EliminarLecturasViejas<QVector3D>(&m_lecturasAccl, escala());
+    EliminarLecturasViejas<QVector3D>(&m_lecturasGyro, escala());
 
     // Generar puntos de posicion/tiempo
     QPointF puntoX(m_numLecturas, posX);
@@ -378,7 +419,7 @@ void Serial::actualizarDispositivosSerial() {
     // Buscar dispositivos serial
     QStringList dispositivos;
     foreach(QSerialPortInfo port, QSerialPortInfo::availablePorts()) {
-        if (port.isValid() && !port.description().isEmpty())
+        if (!port.description().isEmpty())
             dispositivos.append(port.portName());
     }
 
@@ -389,10 +430,7 @@ void Serial::actualizarDispositivosSerial() {
     }
 
     // Llamar esta funcion dentro de un segundo
-    if (conexionConDispositivo())
-        QTimer::singleShot(10000, this, &Serial::actualizarDispositivosSerial);
-    else
-        QTimer::singleShot(1000, this, &Serial::actualizarDispositivosSerial);
+    QTimer::singleShot(1000, this, &Serial::actualizarDispositivosSerial);
 }
 
 /**
@@ -452,5 +490,5 @@ void Serial::interpretarPaquete(const QByteArray& datos) {
     m_lecturasGyro.append(vectorGyro);
 
     // Calcular posicion y actualizar datos para las graficas
-    actualizarPosicion();
+    QTimer::singleShot(0, this, &Serial::actualizarPosicion);
 }

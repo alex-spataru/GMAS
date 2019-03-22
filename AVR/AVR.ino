@@ -15,37 +15,65 @@ static float aX, aY, aZ;
 //
 static float gX, gY, gZ;
 
-
 //
 // Datos de control
 //
-static float amplitud = 2.5;
+static float amplitud = 0;
 static int frecuencia = 0;
 static uint64_t ultimoTiempo = 0;
+
+//
+// Para leer paquetes
+//
+int indice = 0;
+int countDatos = 0;
+static char paquete[2][32];
 
 ///
 /// Obtiene la amplitud y la frecuencia deseada por el usuario
 ///
-static void actualizarDatosDeControl() {
+void serialEvent() {
   // Leer datos del serial
   if (Serial.available() > 0) {
-    // Obtener datos como string
-    String buffer = Serial.readString();
-    int len = buffer.length();
+    // Leer caracter
+    char c = Serial.read();
 
-    // Paquete de control valido, proceder a actualizar amplitud y frecuencia
-    if (buffer.charAt(len - 1) == ';') {
-      // Quitar caracter de terminacion
-      buffer.remove(len - 1);
+    // Actualizar paquete de datos
+    switch (c) {
+      // Caracter de separacion de datos, incrementar indice y 
+      // construir nuevo string
+      case ',':
+        ++indice;
+        countDatos = 0;
+        break;
 
-      // Interpretar amplitud y frecuencia del paquete
-      int index = buffer.indexOf(',');
-      if (index > 0) {
-        amplitud = buffer.substring(0, index).toFloat();
-        frecuencia = buffer.substring(index + 1, len - 1).toFloat();
+      // Caracter de finalizacion de paquete, actualizar datos
+      // y limpiar buffer del paquete
+      case ';':
+        indice = 0;
+        countDatos = 0;
+        amplitud = strtod(paquete[0], NULL);
+        frecuencia = strtod(paquete[1], NULL);
 
-        Serial.flush();
-      }
+        for (int i = 0; i < 32; ++i) {
+          paquete[0][i] = '\0';
+          paquete[1][i] = '\0';
+        }
+        
+        break;
+
+      // Entrada de datos al elemento actual del paquete
+      default:
+        paquete[indice][countDatos] = c;
+        ++countDatos;
+        break;
+    }
+
+    // Evitar errores si los datos no llegan como deberian
+    // de llegar
+    if (indice > 1 || countDatos >= 255) {
+      indice = 0;
+      countDatos = 0;
     }
   }
 }
@@ -96,10 +124,10 @@ static void mandarDatos() {
 ///
 void setup() {
   // Inicializar serial
-  Serial.begin(115200);
+  Serial.begin(1000000);
 
   // Inicializar MPU 6050
-  while (!mpu.begin(MPU6050_SCALE_250DPS, MPU6050_RANGE_2G))
+  while (!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_16G))
   {
     Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
     delay(500);
@@ -113,11 +141,9 @@ void loop() {
   // Actualizar datos de control y mover motor
   actualizarMotor();
 
-  // Actualizar datos de control cada 1000 ms
-  if (millis() - ultimoTiempo > 100) {
+  // Actualizar datos de control cada 10 ms
+  if (millis() - ultimoTiempo >= 10) {
     ultimoTiempo = millis();
     mandarDatos();
-    actualizarDatosDeControl();
   }
 }
-

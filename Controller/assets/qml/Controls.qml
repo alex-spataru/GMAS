@@ -136,10 +136,6 @@ Item {
                 spacing: app.spacing
                 anchors.fill: parent
 
-                Item {
-                    Layout.fillHeight: true
-                }
-
                 Label {
                     font.bold: true
                     font.pixelSize: 14
@@ -154,6 +150,7 @@ Item {
                     delegate: RadioButton {
                         text: modelData
                         Layout.alignment: Qt.AlignHCenter
+                        Layout.fillWidth: true
                         width: parent.width - 2 * app.spacing
                         onCheckedChanged: {
                             if (checked) {
@@ -162,10 +159,6 @@ Item {
                             }
                         }
                     }
-                }
-
-                Item {
-                    Layout.fillHeight: true
                 }
             }
         }

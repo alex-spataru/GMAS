@@ -47,6 +47,12 @@ class Serial : public QObject {
                READ frecuencia
                WRITE cambiarFrecuencia
                NOTIFY frecuenciaCambiada)
+    Q_PROPERTY(int escalaMin
+               READ escalaMin
+               CONSTANT)
+    Q_PROPERTY(int escalaMax
+               READ escalaMax
+               CONSTANT)
     Q_PROPERTY(qreal frecuenciaMin
                READ frecuenciaMin
                CONSTANT)
@@ -62,6 +68,10 @@ class Serial : public QObject {
     Q_PROPERTY(int numLecturas
                READ numLecturas
                CONSTANT)
+    Q_PROPERTY(int escala
+               READ escala
+               WRITE cambiarEscala
+               NOTIFY escalaCambiada)
     Q_PROPERTY(QStringList dispositivosSerial
                READ dispositivosSerial
                NOTIFY dispositivosCambiados)
@@ -70,6 +80,7 @@ class Serial : public QObject {
                NOTIFY conexionCambiada)
 
 signals:
+    void escalaCambiada();
     void datosRecibidos();
     void conexionCambiada();
     void amplitudCambiada();
@@ -82,8 +93,12 @@ public:
     Serial();
     ~Serial();
 
+    int escala() const;
     qreal amplitud() const;
     qreal frecuencia() const;
+
+    int escalaMin() const;
+    int escalaMax() const;
     qreal frecuenciaMin() const;
     qreal frecuenciaMax() const;
     qreal amplitudMin() const;
@@ -96,6 +111,7 @@ public:
     Q_INVOKABLE bool conectarADispositivo(const int device);
 
 public slots:
+    void cambiarEscala (const int escala);
     void habilitarGmas(const bool gmasHabilitado);
     void cambiarFrecuencia(const qreal frecuencia);
     void cambiarAmplitud(const qreal amplitud);
@@ -110,6 +126,7 @@ private slots:
     void interpretarPaquete(const QByteArray& datos);
 
 private:
+    int m_escala;
     quint64 m_numLecturas;
     qreal m_amplitud;
     qreal m_frecuencia;

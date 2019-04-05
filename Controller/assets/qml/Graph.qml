@@ -29,6 +29,7 @@ ChartView {
     property alias xAxisEnabled: xSeries.visible
     property alias yAxisEnabled: ySeries.visible
     property alias zAxisEnabled: zSeries.visible
+    property alias pAxisEnabled: pSeries.visible
 
     //
     // Opciones de visualizacion
@@ -42,7 +43,7 @@ ChartView {
     //
     ValueAxis {
         id: timeAxis
-        min: 0
+        min: 1
         max: 1
     }
 
@@ -51,8 +52,19 @@ ChartView {
     //
     ValueAxis {
         id: positionAxis
-        max: 30
+        max: 60
         min: -40
+    }
+
+    //
+    // Señal para el eje promedio
+    //
+    LineSeries {
+        id: pSeries
+        useOpenGL: true
+        axisX: timeAxis
+        axisY: positionAxis
+        name: qsTr("Aceleración Promedio")
     }
 
     //
@@ -60,6 +72,7 @@ ChartView {
     //
     LineSeries {
         id: zSeries
+        visible: false
         useOpenGL: true
         axisX: timeAxis
         axisY: positionAxis
@@ -95,7 +108,7 @@ ChartView {
     // del GMAS es calculada
     //
     Timer {
-        interval: 1000 / 30
+        interval: 1000 / 60
         repeat: true
         running: true
         onTriggered: {
@@ -105,6 +118,7 @@ ChartView {
             CSerial.actualizarGrafica(xSeries, 0)
             CSerial.actualizarGrafica(ySeries, 1)
             CSerial.actualizarGrafica(zSeries, 2)
+            CSerial.actualizarGrafica(pSeries, 3)
         }
     }
 }

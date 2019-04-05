@@ -52,60 +52,54 @@ Item {
         }
 
         //
-        // Controles de amplitud
+        // Controles de velocidad
         //
         GlowingLabel {
             color: "white"
-            text: qsTr("Amplitud")
+            text: qsTr("Vel. Motor")
             font.pixelSize: fontSizeMedium
             Layout.alignment: Qt.AlignHCenter
             horizontalAlignment: Text.AlignHCenter
         } Dial {
-            to: CSerial.amplitudMax
-            from: CSerial.amplitudMin
-            value: CSerial.amplitudMax / 2
+            id: velocidadDial
+            to: CSerial.velocidadMax
+            from: CSerial.velocidadMin
+            value: CSerial.velocidadMin
             implicitHeight: implicitWidth
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: main.implicitWidth
-            onValueChanged: CSerial.amplitud = value
+            onValueChanged: CSerial.velocidad = value
 
             Label {
                 color: "white"
                 anchors.centerIn: parent
-                text: parent.value.toFixed(2) + " cm"
+                text: parent.value.toFixed(0) + " %"
                 font.pixelSize: Qt.application.font.pixelSize * 2
             }
         }
 
         //
-        // Espaciador
-        //
-        Item {
-            height: app.spacing
-        }
-
-        //
-        // Controles de frequencia
+        // Controles de escala
         //
         GlowingLabel {
             color: "white"
-            text: qsTr("Frecuencia")
+            text: qsTr("Escala")
             font.pixelSize: fontSizeMedium
             Layout.alignment: Qt.AlignHCenter
             horizontalAlignment: Text.AlignHCenter
         } Dial {
-            to: CSerial.frecuenciaMax
-            from: CSerial.frecuenciaMin
+            to: CSerial.escalaMax
+            from: CSerial.escalaMin
+            value: CSerial.escalaMin * 2
             implicitHeight: implicitWidth
-            value: CSerial.frecuenciaMax / 10
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: main.implicitWidth
-            onValueChanged: CSerial.frecuencia = value.toFixed(0)
+           onValueChanged: CSerial.escala = value
 
             Label {
                 color: "white"
                 anchors.centerIn: parent
-                text: parent.value.toFixed(0) + " Hz"
+                text: parent.value.toFixed(2)
                 font.pixelSize: Qt.application.font.pixelSize * 2
             }
         }
@@ -184,7 +178,14 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             icon.source: "qrc:/icons/enable.svg"
             enabled: CSerial.conexionConDispositivo
-            onCheckedChanged: CSerial.gmasHabilitado = checked
+            onCheckedChanged: {
+                CSerial.gmasHabilitado = checked
+                if (!checked)
+                    velocidadDial.value = 0
+                else
+                    velocidadDial.value = CSerial.velocidadMax / 3
+            }
+
             opacity: enabled ? 1 : 0.2
             visible: CSerial.dispositivosSerial.length > 0
         }

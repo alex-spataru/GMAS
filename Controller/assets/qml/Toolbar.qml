@@ -31,6 +31,7 @@ Container {
     signal xSignalChanged(var enabled)
     signal ySignalChanged(var enabled)
     signal zSignalChanged(var enabled)
+    signal pSignalChanged(var enabled)
 
     background: Rectangle {
         anchors.fill: parent
@@ -88,28 +89,9 @@ Container {
             Layout.fillHeight: true
         }
 
-        Dial {
-            to: CSerial.escalaMax
-            from: CSerial.escalaMin
-            value: CSerial.escalaMax / 4
-            implicitHeight: implicitWidth
-            Layout.alignment: Qt.AlignHCenter
-            implicitWidth: main.implicitWidth * 0.6
-            onValueChanged: CSerial.escala = value
-
-            GlowingLabel {
-                text: qsTr("Escala")
-                anchors.centerIn: parent
-                font.pixelSize: Qt.application.font.pixelSize * 2
-            }
-        }
-
-        Item {
-            Layout.fillHeight: true
-        }
-
         SwitchDelegate {
             checked: false
+            Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
             text: qsTr("Graficar aceleración en X")
             onCheckedChanged: xSignalChanged(checked)
@@ -117,16 +99,27 @@ Container {
 
         SwitchDelegate {
             checked: false
+            Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
             text: qsTr("Graficar aceleración en Y")
             onCheckedChanged: ySignalChanged(checked)
         }
 
         SwitchDelegate {
-            checked: true
+            checked: false
+            Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
             text: qsTr("Graficar aceleración en Z")
             onCheckedChanged: zSignalChanged(checked)
+        }
+
+
+        SwitchDelegate {
+            checked: true
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignHCenter
+            text: qsTr("Aceleración promedio")
+            onCheckedChanged: pSignalChanged(checked)
         }
 
         Item {

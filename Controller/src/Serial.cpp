@@ -22,13 +22,16 @@
 
 #include "Serial.h"
 
+#include <QDir>
 #include <QtMath>
 #include <QTimer>
 #include <QDebug>
+#include <QDateTime>
 #include <QXYSeries>
 #include <QMetaType>
 #include <QSerialPort>
 #include <QMessageBox>
+#include <QApplication>
 #include <QSerialPortInfo>
 
 //
@@ -54,12 +57,11 @@ static void EliminarLecturasViejas(QVector<T> *vector, const int numMaximoElemen
  */
 Serial::Serial() {
     // Inicializar valores
-    m_puerto = Q_NULLPTR;
-    m_frecuencia = 0;
-    m_amplitud = 0;
+    m_velocidad = 0;
     m_numLecturas = 0;
-    m_escala = escalaMax() / 2;
+    m_puerto = Q_NULLPTR;
     m_gmasHabilitado = false;
+    m_escala = escalaMax() / 2;
 
     // Registrar tipos de datos
     qRegisterMetaType<QAbstractSeries*>();
@@ -91,15 +93,8 @@ int Serial::escala() const {
 /**
  * Regresa la amplitud target actual
  */
-qreal Serial::amplitud() const {
-    return m_amplitud;
-}
-
-/**
- * Regresa la frequencia target actual
- */
-qreal Serial::frecuencia() const {
-    return m_frecuencia;
+qreal Serial::velocidad() const {
+    return m_velocidad;
 }
 
 /**
@@ -117,31 +112,17 @@ int Serial::escalaMax() const {
 }
 
 /**
- * Regresa la frequencia minima posible
- */
-qreal Serial::frecuenciaMin() const {
-    return 0;
-}
-
-/**
- * Regresa la frequencia maxima posible
- */
-qreal Serial::frecuenciaMax() const {
-    return 100;
-}
-
-/**
  * Regresa la amplitud minima posible
  */
-qreal Serial::amplitudMin() const {
+qreal Serial::velocidadMin() const {
     return 0;
 }
 
 /**
  * Regresa la amplitud maxima posible
  */
-qreal Serial::amplitudMax() const {
-    return 5;
+qreal Serial::velocidadMax() const {
+    return 97;
 }
 
 /**
@@ -206,7 +187,38 @@ bool Serial::conectarADispositivo(const int device) {
 
     // Intentar abrir una conexion con el dispositivo
     if (m_puerto->open(QIODevice::ReadWrite)) {
+        // Actualizar UI
         emit conexionCambiada();
+
+        // Obtener tiempo actual
+        QDateTime tiempo = QDateTime::currentDateTime();
+
+        // Crear carpeta para guardar archivo de lecturas
+        QDir dir = QDir::homePath() + "/" + qApp->applicationName() + "/";
+        if (!dir.exists())
+            dir.mkpath(".");
+
+        // Obtener nombre para archivo de lecturas
+        QString filename = QString("Lecturas-%1-%2.csv")
+                .arg(m_puerto->portName())
+                .arg(tiempo.toString("hh_mm_ss - dd_MMM_yyyy"));
+
+        // Intentar abrir archivo de lecturas
+        m_archivoLecturas.setFileName(dir.filePath(filename));
+        if (!m_archivoLecturas.open(QFile::WriteOnly))
+            qWarning() << "No se puede generar el archivo de lecturas";
+
+        // Escribir titulos al archivo de salidas
+        else {
+            m_archivoLecturas.write("Num. Lectura, "
+                                    "Aceleracion en X,"
+                                    "Aceleracion en Y,"
+                                    "Aceleracion en Z,"
+                                    "Aceleracion Promedio,"
+                                    "Fuerza Resultante\n");
+        }
+
+        // Regresar verdadero para notificar resultado
         return true;
     }
 
@@ -246,25 +258,14 @@ void Serial::habilitarGmas(const bool enabled) {
 }
 
 /**
- * Cambia la frecuencia target a la que se movera el GMAS
+ * Cambia la velocidad target a la que se movera el GMAS
  */
-void Serial::cambiarFrecuencia(const qreal frequency) {
-    assert(frequency >= frecuenciaMin());
-    assert(frequency <= frecuenciaMax());
+void Serial::cambiarVelocidad(const qreal velocidad) {
+    assert(velocidad >= velocidadMin());
+    assert(velocidad <= velocidadMax());
 
-    m_frecuencia = frequency;
-    emit frecuenciaCambiada();
-}
-
-/**
- * Cambia la amplitud target a la que se movera el GMAS
- */
-void Serial::cambiarAmplitud(const qreal amplitude) {
-    assert(amplitude >= amplitudMin());
-    assert(amplitude <= amplitudMax());
-
-    m_amplitud = amplitude;
-    emit amplitudCambiada();
+    m_velocidad = velocidad;
+    emit velocidadCambiada();
 }
 
 /**
@@ -277,7 +278,7 @@ void Serial::cambiarAmplitud(const qreal amplitude) {
 void Serial::actualizarGrafica(QAbstractSeries* series, const int signal) {
     // Verificaciones
     assert(signal >= 0);
-    assert(signal <= 2);
+    assert(signal <= 3);
     assert(series != Q_NULLPTR);
 
     // No hacer nada si la grafica no es visible
@@ -285,21 +286,25 @@ void Serial::actualizarGrafica(QAbstractSeries* series, const int signal) {
         return;
 
     // Obtener puntos para la señal especificada
-    QVector<QPointF> data;
+    QVector<QPointF>* data = Q_NULLPTR;
     switch (signal) {
     case 0:
-        data = m_lecturasX;
+        data = &m_lecturasX;
         break;
     case 1:
-        data = m_lecturasY;
+        data = &m_lecturasY;
         break;
     case 2:
-        data = m_lecturasZ;
+        data = &m_lecturasZ;
+        break;
+    case 3:
+        data = &m_lecturasP;
         break;
     }
 
     // Convertir la gráfica a XY y remplazar puntos
-    static_cast<QXYSeries*>(series)->replace(data);
+    if (data != Q_NULLPTR)
+        static_cast<QXYSeries*>(series)->replace(*data);
 }
 
 /**
@@ -308,12 +313,7 @@ void Serial::actualizarGrafica(QAbstractSeries* series, const int signal) {
 void Serial::mandarDatos() {
     // Verificar si el puerto esta disponible
     if (conexionConDispositivo()) {
-        // Generar datos a mandar
-        qreal _amp = gmasHabilitado() ? amplitud() : 0;
-        qreal _frc = gmasHabilitado() ? frecuencia() : 0;
-
-        // Generar paquete
-        QString datos = tr("%1,%2;").arg(_amp).arg(_frc);
+        QString datos = tr("%1;").arg(gmasHabilitado() ? velocidad() : 0);
         m_puerto->write(datos.toUtf8());
     }
 
@@ -363,10 +363,14 @@ void Serial::onDatosRecibidos() {
  * la posición actual en [x,y,z] del sensor del GMAS.
  */
 void Serial::actualizarPosicion() {
-    // Calcular posiciones
-    qreal posX = static_cast<qreal>(m_lecturasAccl.last().x());
-    qreal posY = static_cast<qreal>(m_lecturasAccl.last().y());
-    qreal posZ = static_cast<qreal>(m_lecturasAccl.last().z());
+    // Obtener lecturas en X,Y,Z
+    qreal lecX = static_cast<qreal>(m_lecturasAccl.last().x());
+    qreal lecY = static_cast<qreal>(m_lecturasAccl.last().y());
+    qreal lecZ = static_cast<qreal>(m_lecturasAccl.last().z());
+
+    // Obtener distancia entre el punto de origen y el punto
+    // tri-dimensional reportado por el MCU
+    qreal posP = sqrt(pow(lecX, 2) + pow(lecY, 2) + pow(lecZ, 2));
 
     // Incrementar contador
     ++m_numLecturas;
@@ -375,18 +379,34 @@ void Serial::actualizarPosicion() {
     EliminarLecturasViejas<QPointF>(&m_lecturasX, escala());
     EliminarLecturasViejas<QPointF>(&m_lecturasY, escala());
     EliminarLecturasViejas<QPointF>(&m_lecturasZ, escala());
+    EliminarLecturasViejas<QPointF>(&m_lecturasP, escala());
     EliminarLecturasViejas<QVector3D>(&m_lecturasAccl, escala());
     EliminarLecturasViejas<QVector3D>(&m_lecturasGyro, escala());
 
     // Generar puntos de posicion/tiempo
-    QPointF puntoX(m_numLecturas, posX);
-    QPointF puntoY(m_numLecturas, posY);
-    QPointF puntoZ(m_numLecturas, posZ);
+    QPointF puntoX(m_numLecturas, lecX);
+    QPointF puntoY(m_numLecturas, lecY);
+    QPointF puntoZ(m_numLecturas, lecZ);
+    QPointF puntoP(m_numLecturas, posP);
 
     // Actualizar lista de posiciones
     m_lecturasX.append(puntoX);
     m_lecturasY.append(puntoY);
     m_lecturasZ.append(puntoZ);
+    m_lecturasP.append(puntoP);
+
+    // Guardar en archivo de lecturas
+    if (m_archivoLecturas.isOpen()) {
+        QString data = tr("%1,%2,%3,%4,%5,%6\n")
+                .arg(m_numLecturas)
+                .arg(lecX)
+                .arg(lecY)
+                .arg(lecZ)
+                .arg(posP)
+                .arg(posP * 0.1275);
+
+        m_archivoLecturas.write(data.toUtf8());
+    }
 }
 
 /**
@@ -395,6 +415,16 @@ void Serial::actualizarPosicion() {
 void Serial::desconectarDispositivo() {
     // Verificar si el puerto serial es valido
     if (m_puerto != Q_NULLPTR) {
+        // Apagar motor
+        if (conexionConDispositivo()) {
+            for (int i = 0; i < 255; ++i)
+                m_puerto->write("0;");
+        }
+
+        // Cerrar archivo de salida
+        if (m_archivoLecturas.isOpen())
+            m_archivoLecturas.close();
+
         // Disconectar señales del puerto serial
         m_puerto->disconnect(this, SLOT(onDatosRecibidos()));
         m_puerto->disconnect(this, SLOT(desconectarDispositivo()));

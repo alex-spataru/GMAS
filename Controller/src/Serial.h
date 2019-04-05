@@ -23,6 +23,7 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
+#include <QFile>
 #include <QObject>
 #include <QVector3D>
 #include <QStringList>
@@ -35,35 +36,29 @@ class QSerialPort;
 class Serial : public QObject {
     Q_OBJECT
 
-    Q_PROPERTY(qreal amplitud
-               READ amplitud
-               WRITE cambiarAmplitud
-               NOTIFY amplitudCambiada)
+    Q_PROPERTY(qreal velocidad
+               READ velocidad
+               WRITE cambiarVelocidad
+               NOTIFY velocidadCambiada)
     Q_PROPERTY(bool gmasHabilitado
                READ gmasHabilitado
                WRITE habilitarGmas
                NOTIFY gmasEstadoCambiado)
-    Q_PROPERTY(qreal frecuencia
-               READ frecuencia
-               WRITE cambiarFrecuencia
-               NOTIFY frecuenciaCambiada)
+    Q_PROPERTY(qreal velocidad
+               READ velocidad
+               WRITE cambiarVelocidad
+               NOTIFY velocidadCambiada)
     Q_PROPERTY(int escalaMin
                READ escalaMin
                CONSTANT)
     Q_PROPERTY(int escalaMax
                READ escalaMax
                CONSTANT)
-    Q_PROPERTY(qreal frecuenciaMin
-               READ frecuenciaMin
+    Q_PROPERTY(qreal velocidadMin
+               READ velocidadMin
                CONSTANT)
-    Q_PROPERTY(qreal frecuenciaMax
-               READ frecuenciaMax
-               CONSTANT)
-    Q_PROPERTY(qreal amplitudMin
-               READ amplitudMin
-               CONSTANT)
-    Q_PROPERTY(qreal amplitudMax
-               READ amplitudMax
+    Q_PROPERTY(qreal velocidadMax
+               READ velocidadMax
                CONSTANT)
     Q_PROPERTY(int numLecturas
                READ numLecturas
@@ -83,9 +78,8 @@ signals:
     void escalaCambiada();
     void datosRecibidos();
     void conexionCambiada();
-    void amplitudCambiada();
+    void velocidadCambiada();
     void posicionCalculada();
-    void frecuenciaCambiada();
     void gmasEstadoCambiado();
     void dispositivosCambiados();
 
@@ -94,15 +88,12 @@ public:
     ~Serial();
 
     int escala() const;
-    qreal amplitud() const;
-    qreal frecuencia() const;
+    qreal velocidad() const;
 
     int escalaMin() const;
     int escalaMax() const;
-    qreal frecuenciaMin() const;
-    qreal frecuenciaMax() const;
-    qreal amplitudMin() const;
-    qreal amplitudMax() const;
+    qreal velocidadMin() const;
+    qreal velocidadMax() const;
 
     quint64 numLecturas() const;
     bool gmasHabilitado() const;
@@ -113,8 +104,7 @@ public:
 public slots:
     void cambiarEscala (const int escala);
     void habilitarGmas(const bool gmasHabilitado);
-    void cambiarFrecuencia(const qreal frecuencia);
-    void cambiarAmplitud(const qreal amplitud);
+    void cambiarVelocidad(const qreal velocidad);
     void actualizarGrafica(QAbstractSeries* series, const int signal);
 
 private slots:
@@ -127,14 +117,16 @@ private slots:
 
 private:
     int m_escala;
+    qreal m_velocidad;
     quint64 m_numLecturas;
-    qreal m_amplitud;
-    qreal m_frecuencia;
     bool m_gmasHabilitado;
+
+    QFile m_archivoLecturas;
 
     QVector<QPointF> m_lecturasX;
     QVector<QPointF> m_lecturasY;
     QVector<QPointF> m_lecturasZ;
+    QVector<QPointF> m_lecturasP;
 
     QVector<QVector3D> m_lecturasGyro;
     QVector<QVector3D> m_lecturasAccl;
